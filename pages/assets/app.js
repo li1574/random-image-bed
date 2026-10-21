@@ -94,6 +94,13 @@
       const res = await fetch(`${randomApi}?json=1&src=proxy&${bust}`, { cache: 'no-store' });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
+        if (err.code === 'EMPTY_LIBRARY') {
+          setStageLoading(false);
+          stageImg.removeAttribute('src');
+          stageImg.alt = '';
+          stageMeta.textContent = '图库还是空的 —— 先去后台上传几张';
+          return;
+        }
         throw new Error(err.error || 'HTTP ' + res.status);
       }
       const data = await res.json();

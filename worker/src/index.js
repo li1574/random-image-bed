@@ -378,7 +378,7 @@ async function handleRandom(request, env) {
   const { files } = await getImageList(env);
 
   if (!files.length) {
-    return json({ error: '图库为空，请先在后台上传图片' }, 404, cors);
+    return json({ error: '图库为空，请先在后台上传图片', code: 'EMPTY_LIBRARY' }, 404, cors);
   }
 
   const prefix = (url.searchParams.get('prefix') || '').toLowerCase();
