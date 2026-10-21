@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>后台 · 随机图床</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%235b5bd6'/><circle cx='36' cy='36' r='11' fill='white' opacity='.9'/><path d='M18 78l22-30 16 20 12-14 16 24z' fill='white' opacity='.85'/></svg>">
+</head>
+<body>
+
+<!-- ============ 登录 ============ -->
+<div class="auth-gate" id="authGate">
+  <form class="auth-card" id="loginForm" autocomplete="on">
+    <h2>后台登录</h2>
+    <p class="desc">输入管理密码后进入上传与管理界面。</p>
+    <div class="field">
+      <label for="pwd">密码</label>
+      <input type="password" id="pwd" autocomplete="current-password" placeholder="请输入密码" required>
+    </div>
+    <button class="btn btn-primary" type="submit" id="loginBtn" style="width:100%;justify-content:center">进入后台</button>
+    <p class="desc" id="loginMsg" style="margin:14px 0 0;color:var(--danger);min-height:20px"></p>
+  </form>
+</div>
+
+<!-- ============ 主界面 ============ -->
+<div id="app" style="display:none">
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/"><span class="brand-dot"></span><span id="brandName">随机图床</span></a>
+      <nav class="nav">
+        <a href="/">首页</a>
+        <a href="/admin.html" class="active">后台</a>
+        <a href="#" id="btnLogout">退出</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- 统计 -->
+    <section class="wrap" style="padding-top:32px">
+      <div class="section-head">
+        <h2>图库概览</h2>
+        <span class="hint" id="statsHint">—</span>
+      </div>
+      <div class="card" id="statsCard">
+        <div style="display:flex;gap:36px;flex-wrap:wrap">
+          <div><div style="font-size:12px;color:var(--muted)">图片总数</div><div style="font-size:22px;font-weight:650" id="stTotal">—</div></div>
+          <div><div style="font-size:12px;color:var(--muted)">占用体积</div><div style="font-size:22px;font-weight:650" id="stSize">—</div></div>
+          <div><div style="font-size:12px;color:var(--muted)">最大单张</div><div style="font-size:22px;font-weight:650" id="stLargest">—</div></div>
+          <div><div style="font-size:12px;color:var(--muted)">仓库</div><div style="font-size:14px;font-weight:600;font-family:var(--mono);padding-top:6px" id="stRepo">—</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 上传 -->
+    <section class="wrap section" style="padding-top:36px">
+      <div class="section-head">
+        <h2>上传图片</h2>
+        <span class="hint">可拖拽，可多选</span>
+      </div>
+
+      <div class="card">
+        <div class="dropzone" id="dropzone">
+          <div class="big">把图片拖到这里，或点击选择文件</div>
+          <div class="small">支持 JPG / PNG / GIF / WebP / AVIF / SVG，可一次选多张</div>
+          <input type="file" id="fileInput" accept="image/*" multiple hidden>
+        </div>
+
+        <div class="field" style="margin-top:22px">
+          <label>上传方式</label>
+          <div class="mode-group">
+            <label class="mode-opt">
+              <input type="radio" name="mode" value="compress" checked>
+              <span class="t">压缩上传</span>
+              <span class="d">在浏览器里重编码为 WebP，大幅减小体积，肉眼几乎无差</span>
+            </label>
+            <label class="mode-opt">
+              <input type="radio" name="mode" value="lossless">
+              <span class="t">无损上传</span>
+              <span class="d">原图直接上传，一个字节都不改。单张建议 ≤ 45MB</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="compressOpts">
+          <div class="field">
+            <label>压缩质量 <span class="sub" id="qualityVal">85%</span></label>
+            <input type="range" id="quality" min="50" max="100" step="1" value="85">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>最大边长</label>
+            <select id="maxEdge">
+              <option value="0">保持原尺寸</option>
+              <option value="2560" selected>2560 px（推荐）</option>
+              <option value="1920">1920 px</option>
+              <option value="1280">1280 px</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="queue" id="queue"></div>
+      </div>
+    </section>
+
+    <!-- 管理 -->
+    <section class="wrap section" style="padding-top:0">
+      <div class="section-head">
+        <h2>图片管理</h2>
+        <span class="hint" id="manageHint">—</span>
+        <button class="btn btn-sm" id="btnRefresh" style="margin-left:auto">刷新列表</button>
+      </div>
+      <div class="admin-grid" id="adminGrid"></div>
+      <div class="empty" id="adminEmpty" style="display:none">还没有图片。</div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap"><span>Cloudflare Workers + Pages · 图片托管于 GitHub</span></div>
+  </footer>
+</div>
+
+<div class="toast-host" id="toastHost"></div>
+
+<script src="/config.js"></script>
+<script src="/assets/admin.js"></script>
+</body>
+</html>

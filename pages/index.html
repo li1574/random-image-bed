@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>随机图床 · Random Image Bed</title>
+<meta name="description" content="跑在 Cloudflare 上的随机图片 API，图片存放在 GitHub 仓库。">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%235b5bd6'/><circle cx='36' cy='36' r='11' fill='white' opacity='.9'/><path d='M18 78l22-30 16 20 12-14 16 24z' fill='white' opacity='.85'/></svg>">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-dot"></span><span id="brandName">随机图床</span></a>
+    <nav class="nav">
+      <a href="#api">API</a>
+      <a href="#gallery">图库</a>
+      <a href="/admin.html">后台</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ============ hero ============ -->
+  <section class="wrap hero">
+    <h1 id="heroTitle">一个 URL，随机一张图。</h1>
+    <p class="lead" id="heroDesc">每次请求 <code>/api/random</code> 都会从图库里随机返回一张图片。图片存在 GitHub 仓库，API 跑在 Cloudflare Workers，前端在 Pages。</p>
+
+    <div class="stage">
+      <div class="stage-media">
+        <img id="stageImg" alt="随机图片" class="loading">
+      </div>
+      <div class="stage-bar">
+        <div class="stage-meta" id="stageMeta">加载中…</div>
+        <button class="btn btn-sm" id="btnCopyUrl">复制直链</button>
+        <button class="btn btn-sm" id="btnCopyApi">复制 API</button>
+        <button class="btn btn-sm btn-primary" id="btnShuffle">换一张</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ api docs ============ -->
+  <section class="wrap section" id="api">
+    <div class="section-head">
+      <h2>API 文档</h2>
+      <span class="hint">所有接口支持跨域，可直接在任意页面引用</span>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head">
+        <span class="method">GET</span>
+        <code class="path">/api/random</code>
+        <span class="desc">随机图片，默认 302 跳转到图片地址</span>
+      </div>
+      <div class="endpoint-body">
+        <p>最常用的一条。直接当 <code>&lt;img src&gt;</code> 用：</p>
+        <pre class="code">&lt;img src="<span id="exRandom"></span>" alt="随机图"&gt;</pre>
+        <p style="margin-top:14px">参数：</p>
+        <table class="param-table">
+          <tr><th>参数</th><th>说明</th></tr>
+          <tr><td>json=1</td><td>返回 JSON（含文件名、大小、直链），不跳转</td></tr>
+          <tr><td>count=3</td><td>一次返回多张，1–20，配合 <code>json=1</code> 使用</td></tr>
+          <tr><td>prefix=nature</td><td>只从文件名以 <code>nature</code> 开头的图片里随机</td></tr>
+          <tr><td>tag=cat</td><td>只从文件名包含 <code>cat</code> 的图片里随机</td></tr>
+          <tr><td>src=auto</td><td><code>auto</code>（默认，小图走 jsDelivr、大图走 raw）/ <code>jsdelivr</code> / <code>raw</code> / <code>proxy</code>（走 Worker 边缘缓存）</td></tr>
+        </table>
+        <p style="margin-top:14px">示例：</p>
+        <pre class="code"><span class="cmt"># 直接拿到一张图（302）</span>
+curl -L "<span class="ex-random"></span>"
+
+<span class="cmt"># 要 JSON</span>
+curl "<span class="ex-random"></span>?json=1"
+
+<span class="cmt"># 分类 + 一次三张</span>
+curl "<span class="ex-random"></span>?json=1&count=3&prefix=nature"</pre>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head">
+        <span class="method">GET</span>
+        <code class="path">/api/list</code>
+        <span class="desc">列出全部图片</span>
+      </div>
+      <div class="endpoint-body">
+        <p>返回所有图片的 <code>name</code> / <code>path</code> / <code>size</code> / <code>url</code>。加 <code>?fresh=1</code> 跳过 60 秒缓存，<code>?url=0</code> 不生成链接。</p>
+        <pre class="code">curl "<span id="exList"></span>"</pre>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head">
+        <span class="method">GET</span>
+        <code class="path">/api/stats</code>
+        <span class="desc">图库统计</span>
+      </div>
+      <div class="endpoint-body">
+        <p>返回图片总数、总占用体积、最大单文件体积。适合做监控或首页展示。</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head">
+        <span class="method">GET</span>
+        <code class="path">/img/:name</code>
+        <span class="desc">图片代理（带边缘缓存）</span>
+      </div>
+      <div class="endpoint-body">
+        <p>由 Worker 直接从 GitHub 拉取并缓存一年。国内访问 <code>raw.githubusercontent.com</code> 不稳的时候用这个，只要你的 Worker 域名能访问就行。</p>
+        <pre class="code">&lt;img src="<span id="exImg"></span>"&gt;</pre>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head">
+        <span class="method post">POST</span>
+        <code class="path">/api/auth</code>
+        <span class="desc">后台登录，换 token</span>
+      </div>
+      <div class="endpoint-body">
+        <p>请求体 <code>{ "password": "..." }</code>，成功返回 <code>{ token, exp }</code>，有效期 7 天。后续写操作带上 <code>Authorization: Bearer &lt;token&gt;</code>。</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head">
+        <span class="method post">POST</span>
+        <code class="path">/api/upload</code>
+        <span class="desc">上传（需 token）</span>
+      </div>
+      <div class="endpoint-body">
+        <p>请求体 <code>{ "filename": "cat.jpg", "content": "&lt;base64&gt;" }</code>。同名文件会被覆盖。前端页面的「压缩上传 / 无损上传」区别在于 <code>content</code> 是压缩后的数据还是原始文件数据 —— 服务端不做任何二次压缩，收到什么就原样提交给 GitHub。</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head">
+        <span class="method del">DELETE</span>
+        <code class="path">/api/delete?name=cat.jpg</code>
+        <span class="desc">删除（需 token）</span>
+      </div>
+      <div class="endpoint-body">
+        <p>从 GitHub 仓库删除对应文件，同时清掉列表缓存。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ gallery ============ -->
+  <section class="wrap section" id="gallery">
+    <div class="section-head">
+      <h2>图库预览</h2>
+      <span class="hint" id="galleryHint">—</span>
+    </div>
+    <div class="gallery" id="galleryGrid"></div>
+    <div class="empty" id="galleryEmpty" style="display:none">图库还是空的。去 <a href="/admin.html">后台</a> 传几张图。</div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>Cloudflare Workers + Pages · 图片托管于 GitHub</span>
+    <span style="margin-left:auto"><a href="/admin.html">进入后台</a></span>
+  </div>
+</footer>
+
+<!-- lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lbClose" aria-label="关闭">&times;</button>
+  <img id="lbImg" alt="">
+  <div class="lightbox-bar">
+    <span id="lbName"></span>
+    <button class="btn btn-sm" id="lbCopy" style="background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.18);color:#fff">复制直链</button>
+  </div>
+</div>
+
+<div class="toast-host" id="toastHost"></div>
+
+<script src="/config.js"></script>
+<script src="/assets/app.js"></script>
+</body>
+</html>

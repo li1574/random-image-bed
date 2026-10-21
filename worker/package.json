@@ -1,0 +1,15 @@
+{
+  "name": "random-image-bed-worker",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cloudflare Worker API for a GitHub-backed random image bed",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "test": "node test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}

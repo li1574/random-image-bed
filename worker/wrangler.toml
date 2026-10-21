@@ -1,0 +1,24 @@
+name = "random-image-bed-api"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+# 自定义域名（部署后取消注释并改成你的域名）
+# routes = [
+#   { pattern = "img-api.example.com", custom_domain = true }
+# ]
+
+[vars]
+GITHUB_OWNER = "li1574"
+GITHUB_REPO = "random-image-bed"
+GITHUB_BRANCH = "main"
+IMAGE_DIR = "images"
+ALLOWED_ORIGIN = "*"
+CDN_BASE = ""
+
+# Secrets 不要写在这里，用命令设置：
+#   npx wrangler secret put GITHUB_TOKEN
+#   npx wrangler secret put ADMIN_PASSWORD
+#   npx wrangler secret put TOKEN_SECRET
+
+[observability]
+enabled = true
