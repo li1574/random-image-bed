@@ -6,6 +6,24 @@ Cloudflare Workers + Pages + GitHub 仓库组成的随机图片床。
 - **Pages**：静态前端（首页使用说明 + 图库预览，`/admin.html` 管理后台）
 - **GitHub 仓库**：图片存储层，每张图就是仓库里的一个文件
 
+## 当前部署
+
+| 项目 | 地址 |
+|---|---|
+| 首页 | https://random-image-bed.pages.dev |
+| 后台 | https://random-image-bed.pages.dev/admin |
+| API | https://random-image-bed-api.xldfrh.workers.dev |
+| 图片仓库 | https://github.com/li1574/random-image-bed |
+| Cloudflare 账号 | xldfrh@163.com |
+
+重新部署：
+
+```bash
+cd worker && npx wrangler deploy                          # Worker
+npx --prefix worker wrangler pages deploy pages \
+  --project-name=random-image-bed --branch=main --commit-dirty=true   # Pages
+```
+
 ```
 浏览器 / 第三方调用
       │
