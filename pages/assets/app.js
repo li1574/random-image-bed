@@ -166,7 +166,7 @@
 
       if (!items.length) {
         galleryEmpty.style.display = '';
-        return;
+        return 0;
       }
       galleryEmpty.style.display = 'none';
 
@@ -192,8 +192,10 @@
         io.observe(img);
       });
       gallery.appendChild(frag);
+      return items.length;
     } catch (err) {
       galleryHint.textContent = '加载失败：' + err.message;
+      return 0;
     }
   }
 
@@ -231,7 +233,13 @@
   if (/YOUR-SUBDOMAIN/.test(String(cfg.apiBase || ''))) {
     stageMeta.textContent = '还没配置 API 地址 —— 打开 pages/config.js 填上你的 Worker 域名';
   } else {
-    shuffle();
-    loadGallery();
+    // 先看列表有没有图，空的就别发一次注定 404 的随机请求
+    loadGallery().then((count) => {
+      if (count > 0) {
+        shuffle();
+      } else {
+        stageMeta.textContent = '图库还是空的 —— 先去后台上传几张';
+      }
+    });
   }
 })();
