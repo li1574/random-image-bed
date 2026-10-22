@@ -28,10 +28,55 @@ const RAW_HOST = 'https://raw.githubusercontent.com';
 const JSDELIVR_HOST = 'https://cdn.jsdelivr.net';
 const BIG_FILE_BYTES = 40 * 1024 * 1024; // jsDelivr 对 >50MB 文件会 403，提前切 raw
 
+/**
+ * 前端域名：这些 hostname 上除 /api、/img 之外的请求，反向代理到 Pages。
+ * 这样一个域名同时提供前端页面和 API，前端用相对路径即可，没有跨域问题。
+ */
+const PAGES_ORIGIN = 'https://random-image-bed.pages.dev';
+const FRONTEND_HOSTS = new Set(['photo.li1574.ccwu.cc']);
+
+function isApiPath(p) {
+  return p === '/api' || p.startsWith('/api/') || p.startsWith('/img/');
+}
+
+/** 把静态请求转发给 Pages，透传状态码与缓存头 */
+async function proxyToPages(request, url) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+  }
+
+  const target = PAGES_ORIGIN + url.pathname + url.search;
+  const upstream = await fetch(target, {
+    method: request.method,
+    headers: {
+      Accept: request.headers.get('Accept') || '*/*',
+      'Accept-Language': request.headers.get('Accept-Language') || 'zh-CN',
+      'User-Agent': request.headers.get('User-Agent') || 'random-image-bed-worker',
+    },
+    redirect: 'manual',
+  });
+
+  const headers = new Headers();
+  for (const [key, value] of upstream.headers) {
+    const k = key.toLowerCase();
+    if (k === 'content-encoding' || k === 'transfer-encoding' || k === 'connection') continue;
+    headers.set(key, value);
+  }
+  headers.set('X-Served-By', 'random-image-bed-worker');
+
+  return new Response(upstream.body, { status: upstream.status, headers });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const pathname = url.pathname.replace(/\/+$/, '') || '/';
+
+    // 前端域名下的页面/静态资源，交给 Pages
+    if (FRONTEND_HOSTS.has(url.hostname) && !isApiPath(url.pathname)) {
+      return proxyToPages(request, url);
+    }
+
     const cors = corsHeaders(env, request);
 
     if (request.method === 'OPTIONS') {

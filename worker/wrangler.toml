@@ -2,17 +2,18 @@ name = "random-image-bed-api"
 main = "src/index.js"
 compatibility_date = "2024-12-01"
 
-# 自定义域名（部署后取消注释并改成你的域名）
-# routes = [
-#   { pattern = "img-api.example.com", custom_domain = true }
-# ]
+# 自定义域名（Workers Custom Domain 会自动创建 DNS 记录并签发证书）
+routes = [
+  { pattern = "img.li1574.ccwu.cc", custom_domain = true },
+  { pattern = "photo.li1574.ccwu.cc", custom_domain = true }
+]
 
 [vars]
 GITHUB_OWNER = "li1574"
 GITHUB_REPO = "random-image-bed"
 GITHUB_BRANCH = "main"
 IMAGE_DIR = "images"
-ALLOWED_ORIGIN = "*"
+ALLOWED_ORIGIN = "https://photo.li1574.ccwu.cc,https://random-image-bed.pages.dev"
 CDN_BASE = ""
 
 # Secrets 不要写在这里，用命令设置：

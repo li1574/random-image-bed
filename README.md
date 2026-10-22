@@ -10,11 +10,25 @@ Cloudflare Workers + Pages + GitHub 仓库组成的随机图片床。
 
 | 项目 | 地址 |
 |---|---|
-| 首页 | https://random-image-bed.pages.dev |
-| 后台 | https://random-image-bed.pages.dev/admin |
-| API | https://random-image-bed-api.xldfrh.workers.dev |
+| 首页 | https://photo.li1574.ccwu.cc |
+| 后台 | https://photo.li1574.ccwu.cc/admin |
+| API | https://img.li1574.ccwu.cc |
+| 备用（Pages 直连） | https://random-image-bed.pages.dev |
 | 图片仓库 | https://github.com/li1574/random-image-bed |
 | Cloudflare 账号 | xldfrh@163.com |
+
+### 域名是怎么挂的
+
+`li1574.ccwu.cc` 是 Cloudflare 里的一个 zone（dnshe 那边做了 NS 委派），但 wrangler 的 OAuth 只授了 `zone:read`，**没有 DNS 写权限**，所以 Pages 的自定义域名没法自动建 CNAME。
+
+解决办法：两个域名都走 **Workers Custom Domain**（这个机制会自动创建 DNS 记录并签证书，不需要 DNS 权限）：
+
+- `img.li1574.ccwu.cc` → Worker，纯 API
+- `photo.li1574.ccwu.cc` → Worker，但 `/api/*` 和 `/img/*` 之外的请求由 Worker 内部反代到 `random-image-bed.pages.dev`
+
+于是 `photo` 域名下前端和 API 同域，`pages/config.js` 里 `apiBase` 留空走相对路径，没有跨域问题。代价是静态资源多一跳 Worker，延迟增加约 10–30ms。
+
+对应代码：`worker/src/index.js` 里的 `FRONTEND_HOSTS` / `proxyToPages`，换域名改这两处。
 
 重新部署：
 
