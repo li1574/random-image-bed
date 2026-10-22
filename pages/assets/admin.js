@@ -58,7 +58,8 @@
   function absUrl(u) {
     if (!u) return '';
     if (/^https?:\/\//i.test(u)) return u;
-    return API + (u.startsWith('/') ? '' : '/') + u;
+    // apiBase 为空表示同域，用当前 origin 补成绝对地址
+    return (API || location.origin) + (u.startsWith('/') ? '' : '/') + u;
   }
 
   async function apiFetch(path, init) {

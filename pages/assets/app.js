@@ -51,7 +51,7 @@
   function absUrl(u) {
     if (!u) return '';
     if (/^https?:\/\//i.test(u)) return u;
-    return API + (u.startsWith('/') ? '' : '/') + u;
+    return API_ABS + (u.startsWith('/') ? '' : '/') + u;
   }
 
   /* ---------- 站点文案 ---------- */
@@ -62,9 +62,11 @@
   if (cfg.siteDesc) $('heroDesc').textContent = cfg.siteDesc;
 
   /* ---------- API 示例填充 ---------- */
-  const randomApi = (API || '') + '/api/random';
-  const listApi = (API || '') + '/api/list';
-  const imgApi = (API || '') + '/img/example.jpg';
+  // apiBase 为空 = 同域部署，用当前 origin 拼绝对地址，保证复制出来能直接贴给别人用
+  const API_ABS = API || location.origin;
+  const randomApi = API_ABS + '/api/random';
+  const listApi = API_ABS + '/api/list';
+  const imgApi = API_ABS + '/img/example.jpg';
 
   $('exRandom').textContent = randomApi;
   $('exList').textContent = listApi;
